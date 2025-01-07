@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { IoMenuOutline } from "react-icons/io5";
 import Image from "next/image";
@@ -17,6 +17,11 @@ export default function Navbar() {
   ];
 
   const pathname = usePathname();
+
+  //close nav when path changes
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
 
   return (
     <div className="relative p-6">
