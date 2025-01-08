@@ -5,6 +5,9 @@ import { useState, FormEvent } from "react";
 export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstname, setFirstname] = useState("");
+  const [lastname, setLastname] = useState("");
+  const [phonenumber, setPhonenumber] = useState("");
   const [isLogin, setIsLogin] = useState(true);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -29,6 +32,39 @@ export default function AuthPage() {
 
           <main className="mt-16">
             <div className="space-y-4">
+            <label htmlFor="firstname" className="block">
+                <span className="text-sm">Jina La Kwanza</span>
+                <input
+                  type="text"
+                  id="firtname"
+                  value={firstname}
+                  onChange={(e) => setFirstname(e.target.value)}
+                  className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
+                  required
+                />
+              </label>
+              <label htmlFor="lastname" className="block">
+                <span className="text-sm">Jina La Pili</span>
+                <input
+                  type="text"
+                  id="firtname"
+                  value={lastname}
+                  onChange={(e) => setLastname(e.target.value)}
+                  className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
+                  required
+                />
+              </label>
+              <label htmlFor="phonenumber" className="block">
+                <span className="text-sm">namba ya simu</span>
+                <input
+                  type="text"
+                  id="firtname"
+                  value={phonenumber}
+                  onChange={(e) => setPhonenumber(e.target.value)}
+                  className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
+                  required
+                />
+              </label>
               <label htmlFor="email" className="block">
                 <span className="text-sm">Barua pepe</span>
                 <input
