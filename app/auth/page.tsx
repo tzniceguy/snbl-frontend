@@ -1,22 +1,47 @@
 "use client";
 import Link from "next/link";
 import { useState, FormEvent } from "react";
+import { register } from "@/api/api";
+import { registerData } from "@/api/api";
 
-export default function AuthPage() {
+export default function Page() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
   const [phonenumber, setPhonenumber] = useState("");
+  const [username, setUsername] = useState("");
+  const [address, setAddress] = useState("");
   const [isLogin, setIsLogin] = useState(true);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // Add authentication logic here
     if (isLogin) {
       // Handle login
     } else {
       // Handle registration
+      const formData: registerData = {
+        user: {
+          username,
+          email,
+          first_name: firstname,
+          last_name: lastname,
+          phone_number: phonenumber,
+        },
+        address,
+        password,
+        password2,
+      };
+
+      try {
+        const result = await register(formData);
+        console.log("Registration successful", result);
+        // Redirect or show success message
+      } catch (error) {
+        console.error("Registration failed", error);
+        // Show error message
+      }
     }
   };
 
@@ -32,39 +57,65 @@ export default function AuthPage() {
 
           <main className="mt-16">
             <div className="space-y-4">
-            <label htmlFor="firstname" className="block">
-                <span className="text-sm">Jina La Kwanza</span>
-                <input
-                  type="text"
-                  id="firtname"
-                  value={firstname}
-                  onChange={(e) => setFirstname(e.target.value)}
-                  className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                  required
-                />
-              </label>
-              <label htmlFor="lastname" className="block">
-                <span className="text-sm">Jina La Pili</span>
-                <input
-                  type="text"
-                  id="firtname"
-                  value={lastname}
-                  onChange={(e) => setLastname(e.target.value)}
-                  className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                  required
-                />
-              </label>
-              <label htmlFor="phonenumber" className="block">
-                <span className="text-sm">namba ya simu</span>
-                <input
-                  type="text"
-                  id="firtname"
-                  value={phonenumber}
-                  onChange={(e) => setPhonenumber(e.target.value)}
-                  className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                  required
-                />
-              </label>
+              {!isLogin && (
+                <>
+                  <label htmlFor="username" className="block">
+                    <span className="text-sm">Jina la mtumiaji</span>
+                    <input
+                      type="text"
+                      id="username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
+                      required
+                    />
+                  </label>
+                  <label htmlFor="firstname" className="block">
+                    <span className="text-sm">Jina La Kwanza</span>
+                    <input
+                      type="text"
+                      id="firstname"
+                      value={firstname}
+                      onChange={(e) => setFirstname(e.target.value)}
+                      className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
+                      required
+                    />
+                  </label>
+                  <label htmlFor="lastname" className="block">
+                    <span className="text-sm">Jina La Pili</span>
+                    <input
+                      type="text"
+                      id="lastname"
+                      value={lastname}
+                      onChange={(e) => setLastname(e.target.value)}
+                      className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
+                      required
+                    />
+                  </label>
+                  <label htmlFor="phonenumber" className="block">
+                    <span className="text-sm">Namba ya simu</span>
+                    <input
+                      type="text"
+                      id="phonenumber"
+                      value={phonenumber}
+                      onChange={(e) => setPhonenumber(e.target.value)}
+                      className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
+                      required
+                    />
+                  </label>
+                  <label htmlFor="address" className="block">
+                    <span className="text-sm">Anwani</span>
+                    <input
+                      type="text"
+                      id="address"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
+                      required
+                    />
+                  </label>
+                </>
+              )}
               <label htmlFor="email" className="block">
                 <span className="text-sm">Barua pepe</span>
                 <input
@@ -87,6 +138,19 @@ export default function AuthPage() {
                   required
                 />
               </label>
+              {!isLogin && (
+                <label htmlFor="password2" className="block">
+                  <span className="text-sm">Thibitisha Neno la siri</span>
+                  <input
+                    type="password"
+                    id="password2"
+                    value={password2}
+                    onChange={(e) => setPassword2(e.target.value)}
+                    className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
+                    required
+                  />
+                </label>
+              )}
             </div>
 
             {isLogin && (
