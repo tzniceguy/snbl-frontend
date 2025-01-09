@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState, FormEvent } from "react";
 import { register } from "@/api/api";
 import { registerData } from "@/api/api";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
   const [email, setEmail] = useState("");
@@ -14,6 +15,8 @@ export default function Page() {
   const [username, setUsername] = useState("");
   const [address, setAddress] = useState("");
   const [isLogin, setIsLogin] = useState(true);
+
+  const router = useRouter();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,9 +38,9 @@ export default function Page() {
       };
 
       try {
-        const result = await register(formData);
-        console.log("Registration successful", result);
+        await register(formData);
         // Redirect or show success message
+        router.push("/profile");
       } catch (error) {
         console.error("Registration failed", error);
         // Show error message
