@@ -45,3 +45,13 @@ export const login = async (formData: LoginData) => {
     throw error;
   }
 };
+
+export const logout = async () => {
+  try {
+    const response = await axiosInstance.post("logout/");
+    return response.data;
+  } catch (error) {
+    console.error("logout failed:", error);
+    throw error;
+  }
+};
