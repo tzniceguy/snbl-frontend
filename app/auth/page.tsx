@@ -1,189 +1,238 @@
 "use client";
-import Link from "next/link";
+
 import { useState, FormEvent } from "react";
-import { register } from "@/api/api";
-import { registerData } from "@/api/api";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { login, register } from "@/api/api";
+import type { RegisterData, LoginData } from "@/api/api";
+
+type FormFields = {
+  email: string;
+  password: string;
+  password2: string;
+  firstname: string;
+  username: string;
+};
+
+const INITIAL_FORM_STATE: FormFields = {
+  email: "",
+  password: "",
+  password2: "",
+  firstname: "",
+  username: "",
+};
 
 export default function Page() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [password2, setPassword2] = useState("");
-  const [firstname, setFirstname] = useState("");
-  const [lastname, setLastname] = useState("");
-  const [phonenumber, setPhonenumber] = useState("");
-  const [username, setUsername] = useState("");
-  const [address, setAddress] = useState("");
+  const [formData, setFormData] = useState<FormFields>(INITIAL_FORM_STATE);
   const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+    setError(null);
+  };
+
+  const validateForm = () => {
+    if (!formData.username || !formData.password) {
+      setError("Tafadhali jaza nafasi zote muhimu");
+      return false;
+    }
+
+    if (!isLogin) {
+      if (!formData.username || !formData.firstname) {
+        setError("Tafadhali jaza nafasi zote muhimu");
+        return false;
+      }
+
+      if (formData.password !== formData.password2) {
+        setError("Maneno ya siri hayafanani");
+        return false;
+      }
+
+      // Basic email validation for registration only
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError("Tafadhali ingiza barua pepe sahihi");
+        return false;
+      }
+    }
+
+    if (formData.password.length < 8) {
+      setError("Neno la siri linahitaji angalau herufi 8");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (isLogin) {
-      // Handle login
-    } else {
-      // Handle registration
-      const formData: registerData = {
-        user: {
-          username,
-          email,
-          first_name: firstname,
-          last_name: lastname,
-          phone_number: phonenumber,
-        },
-        address,
-        password,
-        password2,
-      };
+    if (!validateForm()) return;
 
-      try {
-        await register(formData);
-        // Redirect or show success message
-        router.push("/profile");
-      } catch (error) {
-        console.error("Registration failed", error);
-        // Show error message
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (isLogin) {
+        const loginData: LoginData = {
+          username: formData.username,
+          password: formData.password,
+        };
+
+        const response = await login(loginData);
+        if (response && typeof response === "object") {
+          localStorage.setItem("userProfile", JSON.stringify(response));
+          router.push("/profile");
+        }
+      } else {
+        const registrationData: RegisterData = {
+          user: {
+            username: formData.username,
+            email: formData.email,
+            first_name: formData.firstname,
+          },
+          password: formData.password,
+          password2: formData.password2,
+        };
+
+        const response = await register(registrationData);
+        if (response && typeof response === "object") {
+          localStorage.setItem("userProfile", JSON.stringify(response));
+          router.push("/profile");
+        }
       }
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.errors?.user?.[0] ||
+        error.response?.data?.message ||
+        error.message ||
+        "Kuna hitilafu imetokea";
+      setError(errorMessage);
+      console.error("Authentication failed:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return (
-    <div className="relative min-h-screen">
-      <div className="max-w-sm mx-auto pt-20 pb-8 px-6">
-        <form className="w-full" onSubmit={handleSubmit}>
-          <header>
-            <h1 className="text-center text-xl">
-              {isLogin ? "Ingia" : "Jisajili"} ili kuendelea
-            </h1>
-          </header>
+  const renderInput = (
+    id: keyof FormFields,
+    label: string,
+    type: string = "text",
+    required: boolean = true,
+  ) => (
+    <div className="relative">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700">
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </label>
+      <input
+        type={type}
+        id={id}
+        value={formData[id]}
+        onChange={handleChange}
+        className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+        required={required}
+        disabled={isLoading}
+        autoComplete={type === "password" ? "current-password" : "off"}
+      />
+    </div>
+  );
 
-          <main className="mt-16">
-            <div className="space-y-4">
-              {!isLogin && (
-                <>
-                  <label htmlFor="username" className="block">
-                    <span className="text-sm">Jina la mtumiaji</span>
-                    <input
-                      type="text"
-                      id="username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                      required
-                    />
-                  </label>
-                  <label htmlFor="firstname" className="block">
-                    <span className="text-sm">Jina La Kwanza</span>
-                    <input
-                      type="text"
-                      id="firstname"
-                      value={firstname}
-                      onChange={(e) => setFirstname(e.target.value)}
-                      className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                      required
-                    />
-                  </label>
-                  <label htmlFor="lastname" className="block">
-                    <span className="text-sm">Jina La Pili</span>
-                    <input
-                      type="text"
-                      id="lastname"
-                      value={lastname}
-                      onChange={(e) => setLastname(e.target.value)}
-                      className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                      required
-                    />
-                  </label>
-                  <label htmlFor="phonenumber" className="block">
-                    <span className="text-sm">Namba ya simu</span>
-                    <input
-                      type="text"
-                      id="phonenumber"
-                      value={phonenumber}
-                      onChange={(e) => setPhonenumber(e.target.value)}
-                      className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                      required
-                    />
-                  </label>
-                  <label htmlFor="address" className="block">
-                    <span className="text-sm">Anwani</span>
-                    <input
-                      type="text"
-                      id="address"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                      required
-                    />
-                  </label>
-                </>
-              )}
-              <label htmlFor="email" className="block">
-                <span className="text-sm">Barua pepe</span>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                  required
-                />
-              </label>
-              <label htmlFor="password" className="block">
-                <span className="text-sm">Neno la siri</span>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                  required
-                />
-              </label>
-              {!isLogin && (
-                <label htmlFor="password2" className="block">
-                  <span className="text-sm">Thibitisha Neno la siri</span>
-                  <input
-                    type="password"
-                    id="password2"
-                    value={password2}
-                    onChange={(e) => setPassword2(e.target.value)}
-                    className="w-full mt-1 p-2 border outline-none rounded focus:border-blue-500"
-                    required
-                  />
-                </label>
-              )}
-            </div>
+  const toggleAuthMode = () => {
+    setIsLogin(!isLogin);
+    setError(null);
+    setFormData(INITIAL_FORM_STATE);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          {isLogin ? "Ingia" : "Jisajili"} ili kuendelea
+        </h2>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {!isLogin && renderInput("firstname", "Jina La Kwanza")}
+            {renderInput("username", "Jina la mtumiaji")}
+            {!isLogin && renderInput("email", "Barua pepe", "email")}
+            {renderInput("password", "Neno la siri", "password")}
+            {!isLogin &&
+              renderInput("password2", "Thibitisha Neno la siri", "password")}
+
+            {error && (
+              <div className="rounded-md bg-red-50 p-4">
+                <div className="flex">
+                  <div className="text-sm text-red-700">{error}</div>
+                </div>
+              </div>
+            )}
 
             {isLogin && (
-              <div className="mt-2">
+              <div className="text-right">
                 <Link
                   href="/forgot-password"
-                  className="float-right text-sm text-sky-800 hover:text-sky-600"
+                  className="text-sm font-medium text-blue-600 hover:text-blue-500"
                 >
                   Umesahau neno siri?
                 </Link>
               </div>
             )}
-          </main>
 
-          <footer className="mt-8 flex flex-col space-y-4">
-            <button
-              type="submit"
-              className="w-full p-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
-            >
-              {isLogin ? "Ingia" : "Jisajili"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="w-full p-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded transition-colors"
-            >
-              {isLogin ? "Tengeneza akaunti" : "Nina akaunti tayari"}
-            </button>
-          </footer>
-        </form>
+            <div className="space-y-4">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
+              >
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Inaendelea...
+                  </span>
+                ) : isLogin ? (
+                  "Ingia"
+                ) : (
+                  "Jisajili"
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleAuthMode}
+                disabled={isLoading}
+                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-100"
+              >
+                {isLogin ? "Tengeneza akaunti" : "Nina akaunti tayari"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
