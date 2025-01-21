@@ -5,6 +5,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { relatedProducts } from "@/lib/data";
 import { getProductDetail } from "@/api/products";
+import { useCart } from "@/components/cart-context";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface Product {
   id: number;
@@ -70,6 +73,10 @@ export default function ProductPage({
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+
+  const { dispatch } = useCart();
+  const router = useRouter();
 
   // Fetch Product Data
   useEffect(() => {
@@ -129,10 +136,32 @@ export default function ProductPage({
     );
   };
 
+  const addToCart = () => {
+    dispatch({
+      type: "ADD_TO_CART",
+      payload: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image_url: product.image_url,
+        quantity: quantity,
+        sku: product.sku,
+        vendor_name: product.vendor_name,
+      },
+    });
+
+    toast.success(`Added ${product.name} to cart`);
+    router.push("/cart");
+  };
+
+  const updateQuantity = (change: number) => {
+    setQuantity((prev) => Math.max(1, Math.min(product.stock, prev + change)));
+  };
+
   return (
     <div className="min-h-screen p-8 sm:p-20">
       <div className="max-w-6xl mx-auto">
-        <div className="shadow-lg rounded-lg ">
+        <div className="shadow-lg rounded-lg">
           <div className="flex flex-col md:grid md:grid-cols-2 gap-8">
             {/* Product Image Carousel */}
             <div className="mt-5 relative h-[400px] md:h-[600px] group">
@@ -191,6 +220,33 @@ export default function ProductPage({
                 <p className="text-gray-600 mt-2">
                   Vendor: {product.vendor_name}
                 </p>
+
+                {/* Quantity Selector */}
+                <div className="mt-4 flex items-center gap-4">
+                  <label htmlFor="quantity" className="text-gray-600">
+                    Quantity:
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => updateQuantity(-1)}
+                      className="p-1 rounded-md hover:bg-gray-100"
+                      disabled={quantity <= 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="w-8 text-center">{quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(1)}
+                      className="p-1 rounded-md hover:bg-gray-100"
+                      disabled={quantity >= product.stock}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {product.stock} available
+                  </span>
+                </div>
               </div>
 
               <div className="py-6 flex-grow">
@@ -202,10 +258,18 @@ export default function ProductPage({
 
               {/* Buttons */}
               <div className="space-y-4">
-                <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                  Buy Now
+                <button
+                  onClick={addToCart}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400"
+                  disabled={product.stock === 0}
+                >
+                  {product.stock === 0 ? "Out of Stock" : "Buy Now"}
                 </button>
-                <button className="w-full bg-blue-100 text-blue-600 py-3 px-4 rounded-lg hover:bg-blue-200 transition-colors font-medium">
+                <button
+                  onClick={addToCart}
+                  className="w-full bg-blue-100 text-blue-600 py-3 px-4 rounded-lg hover:bg-blue-200 transition-colors font-medium disabled:bg-gray-100 disabled:text-gray-400"
+                  disabled={product.stock === 0}
+                >
                   Lipa Kidogo Kidogo
                 </button>
               </div>
