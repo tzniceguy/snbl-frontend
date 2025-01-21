@@ -20,7 +20,6 @@ interface Product {
   stock: number;
   sku: string;
   image_url: string;
-  created_at: string;
 }
 
 // Related Products Component
@@ -258,13 +257,6 @@ export default function ProductPage({
 
               {/* Buttons */}
               <div className="space-y-4">
-                <button
-                  onClick={addToCart}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400"
-                  disabled={product.stock === 0}
-                >
-                  {product.stock === 0 ? "Out of Stock" : "Buy Now"}
-                </button>
                 <button
                   onClick={addToCart}
                   className="w-full bg-blue-100 text-blue-600 py-3 px-4 rounded-lg hover:bg-blue-200 transition-colors font-medium disabled:bg-gray-100 disabled:text-gray-400"
