@@ -99,16 +99,10 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      const authToken = localStorage.getItem("authToken");
-      if (authToken) {
-        await logout();
-      }
-      clearAuthData();
+      await logout();
       router.replace("/auth");
     } catch (error) {
       console.error("Logout failed:", error);
-      // Still clear data and redirect even if logout API fails
-      clearAuthData();
       router.replace("/auth");
     } finally {
       setIsLoading(false);
