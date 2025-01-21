@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "@/components/cart-context";
+import Image from "next/image";
 
 export default function CartPage() {
   const { cartItems, dispatch } = useCart();
@@ -29,16 +30,16 @@ export default function CartPage() {
     [dispatch],
   );
 
-  const { subtotal, shipping, total } = React.useMemo(() => {
+  const { subtotal, delivery, total } = React.useMemo(() => {
     const subtotal = cartItems.reduce((sum, item) => {
       const price = parseFloat(item.price);
       return sum + (isNaN(price) ? 0 : price * item.quantity);
     }, 0);
-    const shipping = cartItems.length > 0 ? 5.99 : 0;
+    const delivery = cartItems.length > 0 ? 2500 : 0;
     return {
       subtotal,
-      shipping,
-      total: subtotal + shipping,
+      delivery,
+      total: subtotal + delivery,
     };
   }, [cartItems]);
 
@@ -71,14 +72,16 @@ export default function CartPage() {
               <Card key={item.id}>
                 <CardContent className="p-4">
                   <div className="flex gap-4">
-                    <img
+                    <Image
                       src={item.image_url}
                       alt={item.name}
-                      className="w-24 h-24 object-cover rounded"
+                      width={24}
+                      height={24}
+                      className="w-48 h-48 relative object-contain rounded"
                     />
                     <div className="flex-grow">
                       <h3 className="font-medium">{item.name}</h3>
-                      <p className="text-gray-600">${item.price}</p>
+                      <p className="text-gray-600">Tsh {item.price}</p>
 
                       <div className="flex items-center gap-2 mt-2">
                         <Button
@@ -114,7 +117,8 @@ export default function CartPage() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                       <p className="font-medium">
-                        ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                        TZS{" "}
+                        {(parseFloat(item.price) * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -130,16 +134,16 @@ export default function CartPage() {
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>Tsh. {subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Shipping</span>
-                    <span>${shipping.toFixed(2)}</span>
+                    <span>Delivery</span>
+                    <span>Tsh. {delivery.toFixed(2)}</span>
                   </div>
                   <div className="h-px bg-gray-200 my-2" />
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>Tsh. {total.toFixed(2)}</span>
                   </div>
                 </div>
                 <Button className="w-full">Proceed to Checkout</Button>
