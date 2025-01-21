@@ -55,3 +55,19 @@ export const logout = async () => {
     throw error;
   }
 };
+
+export const fetchProfile = async () => {
+  const authToken = localStorage.getItem("authToken");
+
+  try {
+    const response = await axiosInstance.get("customers/me", {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("fetching profile failed:", error);
+    throw error;
+  }
+};
