@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login, register } from "@/api/api";
 import type { RegisterData, LoginData } from "@/api/api";
+import type { AuthResponse } from "@/api/types";
 
-type FormFields = {
+interface FormFields {
   email: string;
   password: string;
   password2: string;
   firstname: string;
   username: string;
-};
+}
 
 const INITIAL_FORM_STATE: FormFields = {
   email: "",
@@ -22,13 +23,21 @@ const INITIAL_FORM_STATE: FormFields = {
   username: "",
 };
 
-export default function Page() {
+export default function AuthPage() {
   const [formData, setFormData] = useState<FormFields>(INITIAL_FORM_STATE);
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const authToken = localStorage.getItem("authToken");
+    if (authToken) {
+      router.replace("/profile");
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -36,14 +45,14 @@ export default function Page() {
     setError(null);
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     if (!formData.username || !formData.password) {
       setError("Tafadhali jaza nafasi zote muhimu");
       return false;
     }
 
     if (!isLogin) {
-      if (!formData.username || !formData.firstname) {
+      if (!formData.firstname) {
         setError("Tafadhali jaza nafasi zote muhimu");
         return false;
       }
@@ -53,7 +62,6 @@ export default function Page() {
         return false;
       }
 
-      // Basic email validation for registration only
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         setError("Tafadhali ingiza barua pepe sahihi");
@@ -84,9 +92,19 @@ export default function Page() {
         };
 
         const response = await login(loginData);
-        if (response && typeof response === "object") {
-          localStorage.setItem("userProfile", JSON.stringify(response));
-          router.push("/profile");
+        const authResponse = response as AuthResponse;
+
+        if (authResponse.user?.tokens) {
+          // Store auth tokens
+          localStorage.setItem("authToken", authResponse.user.tokens.access);
+          localStorage.setItem(
+            "refreshToken",
+            authResponse.user.tokens.refresh,
+          );
+          localStorage.setItem("userProfile", JSON.stringify(authResponse));
+          router.replace("/profile");
+        } else {
+          throw new Error("Invalid response format");
         }
       } else {
         const registrationData: RegisterData = {
@@ -100,9 +118,18 @@ export default function Page() {
         };
 
         const response = await register(registrationData);
-        if (response && typeof response === "object") {
-          localStorage.setItem("userProfile", JSON.stringify(response));
-          router.push("/profile");
+        const authResponse = response as AuthResponse;
+
+        if (authResponse.user?.tokens) {
+          localStorage.setItem("authToken", authResponse.user.tokens.access);
+          localStorage.setItem(
+            "refreshToken",
+            authResponse.user.tokens.refresh,
+          );
+          localStorage.setItem("userProfile", JSON.stringify(authResponse));
+          router.replace("/profile");
+        } else {
+          throw new Error("Invalid registration response format");
         }
       }
     } catch (error: any) {
@@ -147,6 +174,14 @@ export default function Page() {
     setError(null);
     setFormData(INITIAL_FORM_STATE);
   };
+
+  if (isLoadingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
