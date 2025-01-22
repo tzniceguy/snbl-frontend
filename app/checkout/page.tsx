@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useRouter } from "next/navigation";
 
 interface CheckoutInfo {
   phoneNumber: string;
@@ -38,6 +39,24 @@ export default function CheckoutPage() {
     amount: "",
     remainingBalance: 0,
   });
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const authToken = localStorage.getItem("authToken");
+
+        if (!authToken) {
+          router.replace("/auth");
+          return;
+        }
+      } catch (error) {
+        console.error("fetching acces tokens failed:", error);
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Calculate total
   const total = cartItems.reduce((sum, item) => {
