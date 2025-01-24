@@ -8,14 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
-
-interface CheckoutInfo {
-  phoneNumber: string;
-  network: string;
-  location: string;
-  amount: string;
-  remainingBalance: number;
-}
+import { CheckoutInfo } from "@/api/types";
 
 // Tanzania Network prefixes
 const NETWORK_PREFIXES = {
