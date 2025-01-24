@@ -61,15 +61,31 @@ export interface OrderItem {
 }
 
 export interface Order {
-  items: OrderItem[]; // List of items in the order
-  shipping_address?: string; // Optional shipping address
+  id: number;
+  customer: number;
+  items: Array<{
+    id: number;
+    product: number;
+    product_name: string;
+    product_price: string;
+    quantity: number;
+    subtotal: number;
+  }>;
+  amount: string;
+  shipping_address: string;
+  status: string;
+  payment_status: string;
+  amount_paid: string;
+  tracking_number: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface OrderResponse {
   id: number;
   customer: number;
   amount: string;
-  items: OrderItem[]; // Replace '[]' with 'OrderItem[]' for type safety
+  items: OrderItem[];
   status: "PROCESSING" | "COMPLETED" | "CANCELLED"; // Union type for status
   status_display: string;
   payment_status: "PAID" | "PENDING" | "FAILED"; // Union type for payment status
@@ -92,4 +108,12 @@ export interface PaymentResponse {
   order: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface CheckoutInfo {
+  phoneNumber: string;
+  network: string;
+  location: string;
+  amount: string;
+  remainingBalance: number;
 }
