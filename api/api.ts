@@ -1,28 +1,5 @@
 import axiosInstance from "./axios-instance";
-
-export interface RegisterData {
-  username: string;
-  password: string;
-  firstname: string;
-  email: string;
-  lastname: string;
-  phonenumber: string;
-}
-
-export interface LoginData {
-  username: string;
-  password: string;
-}
-
-interface RegisterResponse {
-  status: string;
-  message: string;
-  data: {
-    id: number;
-    username: string;
-    address: string;
-  };
-}
+import { RegisterData, RegisterResponse, LoginData } from "./types";
 
 export const register = async (
   formData: RegisterData,
@@ -85,6 +62,23 @@ export const fetchProfile = async () => {
     return response.data;
   } catch (error) {
     console.error("fetching profile failed:", error);
+    throw error;
+  }
+};
+
+export const refreshToken = async (token: string): Promise<string> => {
+  try {
+    const response = await axiosInstance.post("token/refresh/", {
+      refresh: token,
+    });
+    const newToken = response.data.access;
+
+    // Update token in local storage
+    localStorage.setItem("authToken", newToken);
+
+    return newToken;
+  } catch (error) {
+    console.error("Refreshing token failed:", error);
     throw error;
   }
 };
