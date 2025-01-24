@@ -5,9 +5,105 @@ import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "@/components/cart-context";
 import Image from "next/image";
+import { initiateOrder } from "@/api/products";
+import { refreshToken } from "@/api/api";
 
 export default function CartPage() {
   const { cartItems, dispatch } = useCart();
+
+  // Function to create an order in the database
+  const createOrder = async () => {
+    try {
+      // Get user profile and tokens from local storage
+      const userProfileString = localStorage.getItem("userProfile");
+      let token = localStorage.getItem("authToken");
+      const refreshtoken = localStorage.getItem("refreshToken");
+
+      if (!token || !refreshtoken) {
+        throw new Error("User not authenticated. Please log in.");
+      }
+
+      const userProfile = userProfileString
+        ? JSON.parse(userProfileString)
+        : null;
+
+      // Access user ID from the profile object
+      const customer = userProfile?.user?.id;
+      if (!customer) {
+        throw new Error("User not found.");
+      }
+
+      // Calculate the total amount from the cart items
+      const amount = cartItems.reduce((sum, item) => {
+        const price = parseFloat(item.price);
+        return sum + (isNaN(price) ? 0 : price * item.quantity);
+      }, 0);
+
+      // Initialize orderData
+      const orderData = {
+        items: cartItems.map((item) => ({
+          product: item.id,
+          quantity: item.quantity,
+        })),
+        amount: amount,
+        shipping_address: "5, Shaban Robert Street, Magogoni Dar Es Salaam", // Optional (can be dynamic)
+      };
+
+      try {
+        // Attempt to create an order
+        const orderResponse = await initiateOrder(orderData, token);
+        console.log("Order created successfully:", orderResponse);
+        alert("Order created successfully!");
+      } catch (error) {
+        // Handle token-related errors
+        if (error instanceof Error && "response" in error) {
+          const axiosError = error as {
+            response?: { data?: { code?: string } };
+            message?: string;
+          };
+
+          if (
+            axiosError.response?.data?.code === "token_not_valid" ||
+            axiosError.message?.includes("Token is invalid or expired")
+          ) {
+            try {
+              // Refresh the token
+              const newToken = await refreshToken(refreshtoken);
+
+              // Store the new token in local storage
+              localStorage.setItem("authToken", newToken);
+              token = newToken;
+
+              // Retry order creation with the new token
+              const orderResponse = await initiateOrder(orderData, newToken);
+              console.log(
+                "Order created successfully after token refresh:",
+                orderResponse,
+              );
+              alert("Order created successfully!");
+            } catch (refreshError) {
+              // Clear tokens and redirect to login if refreshing fails
+              localStorage.removeItem("authToken");
+              localStorage.removeItem("refreshToken");
+              localStorage.removeItem("userProfile");
+              console.error("Token refresh failed:", refreshError);
+              throw new Error("Session expired. Please log in again.");
+            }
+          } else {
+            throw error; // Rethrow non-token-related errors
+          }
+        } else {
+          console.error("Order creation failed:", error);
+          alert(
+            "An error occurred while creating the order. Please try again.",
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Order creation failed:", error);
+      alert("An error occurred while creating the order. Please try again.");
+    }
+  };
 
   const updateQuantity = React.useCallback(
     (id: number, newQuantity: number) => {
@@ -75,8 +171,8 @@ export default function CartPage() {
                     <Image
                       src={item.image_url}
                       alt={item.name}
-                      width={24}
-                      height={24}
+                      width={96} // Adjusted width
+                      height={96} // Adjusted height
                       className="w-48 h-48 relative object-contain rounded"
                     />
                     <div className="flex-grow">
@@ -146,7 +242,9 @@ export default function CartPage() {
                     <span>Tsh. {total.toFixed(2)}</span>
                   </div>
                 </div>
-                <Button className="w-full">Proceed to Checkout</Button>
+                <Button onClick={createOrder} className="w-full">
+                  Proceed to Checkout
+                </Button>
               </CardContent>
             </Card>
           </div>

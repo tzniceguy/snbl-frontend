@@ -4,8 +4,9 @@ import { useState, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login, register } from "@/api/api";
-import type { RegisterData, LoginData } from "@/api/api";
+import type { RegisterData, LoginData } from "@/api/types";
 import type { AuthResponse } from "@/api/types";
+import { AxiosError } from "axios";
 
 interface FormFields {
   email: string;
@@ -27,8 +28,7 @@ export default function AuthPage() {
   const [formData, setFormData] = useState<FormFields>(INITIAL_FORM_STATE);
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // For form submission loading
   const router = useRouter();
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function AuthPage() {
     if (authToken) {
       router.replace("/profile");
     }
-  }, []);
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -81,7 +81,7 @@ export default function AuthPage() {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setIsLoading(true);
+    setIsLoading(true); // Set loading state
     setError(null);
 
     try {
@@ -102,7 +102,7 @@ export default function AuthPage() {
             authResponse.user.tokens.refresh,
           );
           localStorage.setItem("userProfile", JSON.stringify(authResponse));
-          router.replace("/profile");
+          router.replace("/");
         } else {
           throw new Error("Invalid response format");
         }
@@ -132,16 +132,20 @@ export default function AuthPage() {
           throw new Error("Invalid registration response format");
         }
       }
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.errors?.user?.[0] ||
-        error.response?.data?.message ||
-        error.message ||
-        "Kuna hitilafu imetokea";
+    } catch (error: unknown) {
+      let errorMessage = "Kuna hitilafu imetokea";
+      if (error instanceof AxiosError) {
+        errorMessage =
+          error.response?.data?.errors?.user?.[0] ||
+          error.response?.data?.message ||
+          error.message ||
+          "kuna hitilafu imetokea";
+      }
+
       setError(errorMessage);
       console.error("Authentication failed:", error);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Reset loading state
     }
   };
 
@@ -174,14 +178,6 @@ export default function AuthPage() {
     setError(null);
     setFormData(INITIAL_FORM_STATE);
   };
-
-  if (isLoadingProfile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
