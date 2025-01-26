@@ -54,7 +54,7 @@ export default function OrderDetailPage() {
   };
 
   const handleAddPayment = () => {
-    router.push(`/orders/${orderId}/payment`);
+    router.push(`/payment/${orderId}`);
   };
 
   if (loading) {
@@ -63,7 +63,7 @@ export default function OrderDetailPage() {
 
   if (error || !order) {
     return (
-      <Card variant="destructive">
+      <Card>
         <CardContent className="p-6 text-center">
           <p className="text-red-600">{error || "Order not found"}</p>
           <Button onClick={() => router.push("/orders")} className="mt-4">
@@ -115,7 +115,7 @@ export default function OrderDetailPage() {
                 <div className="flex justify-between">
                   <span>Remaining Balance</span>
                   <span className="font-semibold text-red-600">
-                    TSh {order?.remaining_balance?.toLocaleString() || "0"}
+                    TSh {order?.amount_remaining?.toLocaleString() || "0"}
                   </span>
                 </div>
                 <div className="flex justify-between">
