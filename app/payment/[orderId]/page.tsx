@@ -22,10 +22,16 @@ const NETWORK_PREFIXES = {
   "069": "AIRTEL-MONEY",
 } as const;
 
+type PaymentInfo = {
+  phoneNumber: string;
+  network: string;
+  amount: string;
+};
+
 export default function PaymentPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentInfo, setPaymentInfo] = useState({
+  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>({
     phoneNumber: "",
     network: "",
     amount: "",
@@ -66,7 +72,9 @@ export default function PaymentPage() {
         const orderDetail = await getOrderDetail(orderId, token);
         setOrder(orderDetail);
       } catch (error) {
-        setError("Failed to fetch order details");
+        if (error instanceof Error) {
+          setError("Failed to fetch order details");
+        }
         console.error(error);
       }
     };
@@ -106,6 +114,8 @@ export default function PaymentPage() {
     }
 
     setIsProcessing(true);
+    setError(null);
+
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
@@ -114,7 +124,6 @@ export default function PaymentPage() {
       }
 
       // Process payment using the independent payment route
-      // format phone number to include country code
       const formattedPhoneNumber = formatPhoneNumber(paymentInfo.phoneNumber);
       const formattedNetwork = paymentInfo.network
         .toLowerCase()
@@ -131,7 +140,7 @@ export default function PaymentPage() {
       );
 
       if (response.azampay_response.success) {
-        //update order state with new payment info
+        // Update order state with new payment info
         setOrder((prevOrder) => ({
           ...prevOrder!,
           payment_status: response.order.payment_status,
@@ -145,7 +154,7 @@ export default function PaymentPage() {
             `Status: ${response.payment.status}\n` +
             `${response.azampay_response.message}`,
         );
-        //redirect to order details page after a delay
+        // Redirect to order details page after a delay
         setTimeout(() => {
           router.push(`/orders/${orderId}`);
         }, 1000);
@@ -153,8 +162,10 @@ export default function PaymentPage() {
         setError("Payment processing failed. Please try again.");
       }
     } catch (error) {
+      if (error instanceof Error) {
+        setError("Payment processing failed. Please try again.");
+      }
       console.error("Payment processing error:", error);
-      setError("Payment processing failed. Please try again.");
     } finally {
       setIsProcessing(false);
     }
