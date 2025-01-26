@@ -1,5 +1,13 @@
 // types.ts
 
+export interface ApiError {
+  response?: {
+    data?: {
+      code?: string;
+    };
+  };
+}
+
 // User-related interfaces
 export interface UserTokens {
   access: string;
@@ -71,7 +79,7 @@ export interface Order {
     quantity: number;
     price: number;
   }>;
-  amount: string;
+  amount: number;
   shipping_address: string;
   status: string;
   payment_status: string;
