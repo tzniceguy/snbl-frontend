@@ -69,13 +69,14 @@ export interface Order {
     product_name: string;
     product_price: string;
     quantity: number;
-    subtotal: number;
+    price: number;
   }>;
   amount: string;
   shipping_address: string;
   status: string;
   payment_status: string;
-  amount_paid: string;
+  amount_paid: number;
+  amount_remaining: number;
   tracking_number: string | null;
   created_at: string;
   updated_at: string;
@@ -98,16 +99,34 @@ export interface OrderResponse {
 }
 
 // Payment-related interfaces
-export interface PaymentResponse {
-  id: string;
-  amount: string;
-  payment_method: string;
-  transaction_id: string;
-  phone_number: string;
-  status: "COMPLETED" | "PENDING" | "FAILED"; // Union type for status
+export interface PaymentData {
   order: number;
-  created_at: string;
-  updated_at: string;
+  phone_number: string;
+  amount: number;
+  payment_method: string;
+}
+
+export interface PaymentResponse {
+  payment: {
+    id: string;
+    amount: number;
+    phone_number: string;
+    status: string;
+  };
+  order: {
+    id: number;
+    payment_status: string;
+    amount_paid: number;
+    remaining_balance: number;
+    tracking_number: string | null;
+    status: string;
+  };
+  azampay_response: {
+    success: boolean;
+    transactionId: string;
+    message: string;
+    messageCode: number;
+  };
 }
 
 export interface CheckoutInfo {
