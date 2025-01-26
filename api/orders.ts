@@ -1,89 +1,81 @@
 import axiosInstance from "./axios-instance";
-import { OrderResponse, Order, PaymentData } from "./types";
+import { OrderResponse, Order, PaymentData, PaymentResponse } from "./types";
 import { refreshToken } from "./api";
 
-export const fetchOrders = async (): Promise<Order[]> => {
-  const token = localStorage.getItem("authToken");
-  const refreshtokenValue = localStorage.getItem("refreshToken");
+interface ApiError {
+  response?: {
+    data?: {
+      code?: string;
+    };
+  };
+}
 
-  if (!token || !refreshtokenValue) {
+const getAuthHeaders = (token: string) => ({
+  Authorization: `Bearer ${token}`,
+  "Content-Type": "application/json",
+});
+
+const handleTokenRefresh = async (refreshTokenValue: string) => {
+  const newToken = await refreshToken(refreshTokenValue);
+  localStorage.setItem("authToken", newToken);
+  return newToken;
+};
+
+const withAuthRetry = async <T>(requestFn: (token: string) => Promise<T>) => {
+  const token = localStorage.getItem("authToken");
+  const refreshTokenValue = localStorage.getItem("refreshToken");
+
+  if (!token || !refreshTokenValue) {
     throw new Error("User not authenticated, please login");
   }
 
   try {
-    const response = await axiosInstance.get<{ results: Order[] }>("/orders/", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return Array.isArray(response.data.results) ? response.data.results : [];
-  } catch (error) {
-    if (error.response?.data?.code === "token_not_valid") {
+    return await requestFn(token);
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.response?.data?.code === "token_not_valid") {
       try {
-        const newToken = await refreshToken(refreshtokenValue);
-
-        // Store the new token
-        localStorage.setItem("authToken", newToken);
-
-        // Retry the request with the new token
-        const response = await axiosInstance.get<{ results: Order[] }>(
-          "/orders/",
-          {
-            headers: {
-              Authorization: `Bearer ${newToken}`,
-            },
-          },
-        );
-        return Array.isArray(response.data.results)
-          ? response.data.results
-          : [];
-      } catch (refreshError) {
-        // If token refresh fails, log out the user
+        const newToken = await handleTokenRefresh(refreshTokenValue);
+        return await requestFn(newToken);
+      } catch {
         localStorage.removeItem("authToken");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("userProfile");
         throw new Error("User not authenticated, please login");
       }
     } else {
-      throw new Error("Failed to fetch orders");
+      throw error;
     }
   }
+};
+
+export const fetchOrders = async (): Promise<Order[]> => {
+  return withAuthRetry(async (token) => {
+    const response = await axiosInstance.get<{ results: Order[] }>("/orders/", {
+      headers: getAuthHeaders(token),
+    });
+    return Array.isArray(response.data.results) ? response.data.results : [];
+  });
 };
 
 export const initiateOrder = async (
   orderData: Order,
   token: string,
 ): Promise<OrderResponse> => {
-  try {
-    const response = await axiosInstance.post("/orders/", orderData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Initiating order failed:", error);
-    throw error;
-  }
+  const response = await axiosInstance.post("/orders/", orderData, {
+    headers: getAuthHeaders(token),
+  });
+  return response.data;
 };
 
 export const getOrderDetail = async (
   id: string,
   token: string,
 ): Promise<Order> => {
-  try {
-    const response = await axiosInstance.get(`/orders/${id}/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Fetching order detail failed:", error);
-    throw error;
-  }
+  const response = await axiosInstance.get(`/orders/${id}/`, {
+    headers: getAuthHeaders(token),
+  });
+  return response.data;
 };
 
 export const processOrderPayment = async (
@@ -91,19 +83,12 @@ export const processOrderPayment = async (
   paymentData: PaymentData,
   token: string,
 ): Promise<PaymentResponse> => {
-  try {
-    const response = await axiosInstance.post<PaymentResponse>(
-      `payments/`,
-      paymentData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Processing payment failed:", error);
-    throw error;
-  }
+  const response = await axiosInstance.post<PaymentResponse>(
+    `payments/`,
+    paymentData,
+    {
+      headers: getAuthHeaders(token),
+    },
+  );
+  return response.data;
 };
