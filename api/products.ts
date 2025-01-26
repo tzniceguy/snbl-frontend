@@ -1,5 +1,5 @@
 import axiosInstance from "./axios-instance";
-import { PaymentResponse, Product } from "./types";
+import { Product } from "./types";
 
 export const getProducts = async (): Promise<Product[]> => {
   try {
@@ -16,21 +16,6 @@ export const getProductDetail = async (slug: string): Promise<Product> => {
     return response.data;
   } catch (error) {
     console.error("fetching product detail failed:", error);
-    throw error;
-  }
-};
-
-export const initiatePayment = async (
-  formData: Product,
-): Promise<PaymentResponse> => {
-  try {
-    const response = await axiosInstance.post<PaymentResponse>(
-      "payments/",
-      formData,
-    );
-    return response.data;
-  } catch (error) {
-    console.error("initiating payment failed:", error);
     throw error;
   }
 };
