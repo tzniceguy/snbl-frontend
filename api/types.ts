@@ -1,4 +1,5 @@
 // types.ts
+export type OrderStatus = "completed" | "pending" | "cancelled";
 
 export interface ApiError {
   response?: {

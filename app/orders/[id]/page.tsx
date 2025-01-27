@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getOrderDetail } from "@/api/orders";
-import { Order } from "@/api/types";
+import { Order, OrderStatus } from "@/api/types";
 
 export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
@@ -37,7 +37,7 @@ export default function OrderDetailPage() {
     fetchOrderDetail();
   }, [orderId, router]);
 
-  const renderOrderStatus = (status: string) => {
+  const renderOrderStatus = (status: OrderStatus) => {
     const statusStyles = {
       completed: "text-green-600",
       pending: "text-yellow-600",
@@ -120,7 +120,7 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <span>Status</span>
-                  {renderOrderStatus(order.status)}
+                  {renderOrderStatus(order.status as OrderStatus)}
                 </div>
 
                 {/* Add Payment Button */}
