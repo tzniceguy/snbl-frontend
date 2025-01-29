@@ -54,7 +54,7 @@ export interface Product {
   name: string;
   slug: string;
   vendor_name: string;
-  price: string;
+  price: number;
   description: string;
   image: string;
   category: string;
