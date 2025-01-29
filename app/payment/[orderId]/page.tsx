@@ -197,6 +197,16 @@ export default function PaymentPage() {
                   Remaining balance: TSh {order?.amount_remaining}
                 </AlertDescription>
               </Alert>
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error} </AlertDescription>
+                </Alert>
+              )}
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error} </AlertDescription>
+              </Alert>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">

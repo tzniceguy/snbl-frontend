@@ -49,7 +49,7 @@ export default function CheckoutPage() {
       }
     };
     checkAuth();
-  }, []);
+  }, [router]);
 
   // Calculate total
   const total = cartItems.reduce((sum, item) => {

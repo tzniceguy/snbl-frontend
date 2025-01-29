@@ -94,7 +94,7 @@ export default function ProfilePage() {
     };
 
     checkAuthAndFetchProfile();
-  }, []);
+  }, [router]);
 
   const handleLogout = async () => {
     setIsLoading(true);
