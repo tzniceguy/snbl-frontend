@@ -4,32 +4,61 @@ import Link from "next/link";
 import { IoMenuOutline } from "react-icons/io5";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { FiShoppingCart } from "react-icons/fi";
+import { FiShoppingCart, FiUser } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navItems = [
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const routes = [
     { title: "Home", href: "/" },
     { title: "All", href: "/product-list" },
-    { title: "Account", href: "/auth" },
     { title: "Contact", href: "/contact" },
   ];
+
+  const protectedRoutes = [
+    { title: "Profile", href: "/profile", icon: FiUser },
+    { title: "Orders", href: "/orders" },
+  ];
+
+  const navItems = isAuthenticated
+    ? [...routes, ...protectedRoutes]
+    : [...routes, { title: "Login", href: "/auth" }];
 
   const pathname = usePathname();
   const router = useRouter();
 
+  // Authentication check
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          setIsAuthenticated(false);
+          return;
+        }
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   // Handle click outside to close menu
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       const nav = document.querySelector("nav");
       const menuButton = document.querySelector('[aria-label="Toggle menu"]');
 
       if (
         isMenuOpen &&
         nav &&
-        !nav.contains(event.target) &&
-        !menuButton.contains(event.target)
+        !nav.contains(event.target as Node) &&
+        !menuButton?.contains(event.target as Node)
       ) {
         setIsMenuOpen(false);
       }
@@ -46,9 +75,6 @@ export default function Navbar() {
 
   return (
     <header className="relative p-6">
-      {" "}
-      {/* Changed to semantic header tag */}
-      {/* Logo - centered on mobile, left on desktop */}
       <div className="absolute left-1/2 -translate-x-1/2 top-10 md:left-8 md:translate-x-0 transition-all duration-200">
         <Link href="/" className="block">
           <Image
@@ -61,7 +87,7 @@ export default function Navbar() {
           />
         </Link>
       </div>
-      {/* Mobile menu button */}
+
       <button
         className="md:hidden absolute top-10 left-8 text-4xl hover:text-gray-600 transition-colors"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -70,17 +96,26 @@ export default function Navbar() {
       >
         <IoMenuOutline />
       </button>
-      {/* Cart button */}
-      <button
-        className="absolute top-10 right-8 text-2xl hover:text-gray-600 transition-colors"
-        onClick={() => router.push("/cart")}
-        aria-label="Open cart"
-      >
-        <FiShoppingCart />
-        {/* Optional: Add cart items count badge */}
-        {/* <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span> */}
-      </button>
-      {/* Navigation */}
+
+      <div className="absolute top-10 right-8 flex items-center space-x-4">
+        {isAuthenticated && (
+          <button
+            className="text-2xl hover:text-gray-600 transition-colors"
+            onClick={() => router.push("/profile")}
+            aria-label="Profile"
+          >
+            <FiUser />
+          </button>
+        )}
+        <button
+          className="text-2xl hover:text-gray-600 transition-colors"
+          onClick={() => router.push("/cart")}
+          aria-label="Open cart"
+        >
+          <FiShoppingCart />
+        </button>
+      </div>
+
       <nav
         className={`
           ${isMenuOpen ? "block" : "hidden"}
