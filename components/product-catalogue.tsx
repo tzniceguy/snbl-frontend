@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import ProductCard from "./product-card";
-import { getProducts, Product } from "@/api/products";
+import { getProducts } from "@/api/products";
+import { Product } from "@/api/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function ProductCatalogue() {
