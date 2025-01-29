@@ -2,64 +2,11 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Link from "next/link";
-import { relatedProducts } from "@/lib/data";
 import { getProductDetail } from "@/api/products";
 import { useCart } from "@/components/cart-context";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
-interface Product {
-  id: number;
-  name: string;
-  slug: string;
-  vendor_name: string;
-  description: string;
-  price: string;
-  category: string;
-  stock: number;
-  sku: string;
-  image_url: string;
-}
-
-// Related Products Component
-function RelatedProducts() {
-  return (
-    <div className="mt-16">
-      <h2 className="text-2xl font-bold text-gray-900 mb-8">
-        Related Products
-      </h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {relatedProducts.map((product) => (
-          <Link
-            href={`/products/${product.title}`}
-            key={product.id}
-            className="group"
-          >
-            <div className="rounded-lg overflow-hidden bg-white shadow-md hover:shadow-lg transition-shadow">
-              <div className="relative h-48 md:h-64">
-                <Image
-                  src={product.img_url}
-                  alt={product.title}
-                  fill
-                  className="object-contain group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="p-4">
-                <h3 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                  {product.title}
-                </h3>
-                <p className="text-gray-600 mt-1">
-                  TSh {product.price.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
+import { Product } from "@/api/types";
 
 // Main Product Page Component
 export default function ProductPage({
@@ -141,7 +88,7 @@ export default function ProductPage({
       payload: {
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: product.price.toString(),
         image_url: product.image_url,
         quantity: quantity,
         sku: product.sku,
@@ -268,9 +215,6 @@ export default function ProductPage({
             </div>
           </div>
         </div>
-
-        {/* Related Products Section */}
-        <RelatedProducts />
       </div>
     </div>
   );
